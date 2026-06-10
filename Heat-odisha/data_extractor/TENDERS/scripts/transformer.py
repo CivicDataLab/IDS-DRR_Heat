@@ -1,77 +1,119 @@
-import pandas as pd
+
 import os
+import pandas as pd
 import geopandas as gpd
+ 
+# ---------------------------------------------------------------------------
+# Configuration -- adjust these paths/names to match your repo layout.
+# ---------------------------------------------------------------------------
+BASE = os.getcwd()
+# The flood source lives in Sources/TENDERS; set this to your heat source dir.
+DATA_PATH = os.path.join(BASE, 'Heat-odisha', 'data_extractor', 'TENDERS', 'data')
+SHAPEFILE = os.path.join(BASE, 'Heat-odisha', 'Maps',
+                         'od_ids-drr_shapefiles', 'odisha_block_final.geojson')
+GEOTAGGED_CSV = os.path.join(DATA_PATH, 'heattenders_blockgeotagged.csv')
+ 
+# Merge keys (tender side -> shapefile side)
+TENDER_DISTRICT_COL, TENDER_BLOCK_COL = 'DISTRICT_FINALISED', 'BLOCK_FINALISED'
+SHAPE_DISTRICT_COL, SHAPE_BLOCK_COL = 'dtname', 'block_name'
+ 
+# Build indicators only from strong-signal heat tenders when that information
+# is available (heat_signal == 'strong', written by the patched classifier).
+# Set to False to use every row in the geotagged file.
+ONLY_STRONG_SIGNAL = False
+ 
+ 
+def parse_awarded_value(df):
+    """Return a clean float 'Awarded Value' column, tolerant of either source
+    column name, embedded commas, and NaN / already-numeric values."""
+    if 'Awarded Price in ₹' in df.columns and 'Awarded Value' not in df.columns:
+        df = df.rename(columns={'Awarded Price in ₹': 'Awarded Value'})
+    if 'Awarded Value' not in df.columns:
+        raise KeyError("Neither 'Awarded Value' nor 'Awarded Price in ₹' found in the geotagged file.")
+    df['Awarded Value'] = (
+        df['Awarded Value'].astype(str)
+        .str.replace(',', '', regex=False)
+        .str.strip()
+    )
+    df['Awarded Value'] = pd.to_numeric(df['Awarded Value'], errors='coerce')
+    return df
+ 
+ 
+def write_monthly(variable_df, variable, value_col):
+    """Write one CSV per month for a single indicator."""
+    out_dir = os.path.join(DATA_PATH, 'variables', variable)
+    os.makedirs(out_dir, exist_ok=True)
+    for year_month in variable_df['month'].dropna().unique():
+        monthly = variable_df[variable_df['month'] == year_month][['object_id', value_col]]
+        monthly.to_csv(os.path.join(out_dir, '{}_{}.csv'.format(variable, year_month)),
+                       index=False)
+ 
+ 
+def build_indicators(df):
+    """Core transformation: takes the merged (geotagged) heat tenders frame and
+    writes all indicators. Kept IO-light so it can be unit-tested."""
+    # 1. Total awarded value per block per month
+    variable = 'total_tender_awarded_value'
+    total_df = (df.groupby(['month', 'object_id'])[['Awarded Value']]
+                  .sum().reset_index()
+                  .rename(columns={'Awarded Value': variable}))
+    write_monthly(total_df, variable, variable)
+    print('  wrote indicator:', variable)
+ 
+    # 2. One indicator per funding Scheme (skip NaN / blank)
+    if 'Scheme' in df.columns:
+        for scheme in df['Scheme'].dropna().unique():
+            if str(scheme).strip() in ('', 'nan', 'None'):
+                continue
+            sdf = df[df['Scheme'] == scheme]
+            sdf = sdf.groupby(['month', 'object_id'])[['Awarded Value']].sum().reset_index()
+            variable = '{}_tenders_awarded_value'.format(str(scheme).strip())
+            sdf = sdf.rename(columns={'Awarded Value': variable})
+            write_monthly(sdf, variable, variable)
+            print('  wrote indicator:', variable)
+ 
+    # 3. One indicator per heat-response theme (skip NaN / "Others")
+    if 'Response Type' in df.columns:
+        for rtype in df['Response Type'].dropna().unique():
+            if str(rtype).strip() in ('', 'nan', 'None', 'Others'):
+                continue
+            rdf = df[df['Response Type'] == rtype]
+            rdf = rdf.groupby(['month', 'object_id'])[['Awarded Value']].sum().reset_index()
+            variable = '{}_tenders_awarded_value'.format(str(rtype).strip())
+            rdf = rdf.rename(columns={'Awarded Value': variable})
+            write_monthly(rdf, variable, variable)
+            print('  wrote indicator:', variable)
+ 
+ 
+def main():
+    od_gdf = gpd.read_file(SHAPEFILE)
+    heat_df = pd.read_csv(GEOTAGGED_CSV)
+ 
+    if ONLY_STRONG_SIGNAL and 'heat_signal' in heat_df.columns:
+        before = len(heat_df)
+        heat_df = heat_df[heat_df['heat_signal'] == 'strong'].copy()
+        print('Restricted to strong-signal heat tenders: {} -> {} rows'.format(before, len(heat_df)))
+    elif ONLY_STRONG_SIGNAL:
+        print("WARNING: ONLY_STRONG_SIGNAL=True but no 'heat_signal' column found; "
+              "using all rows in the geotagged file.")
+ 
+    # Normalize case before merging: BLOCK_FINALISED is title-case (e.g.
+    # "Chitrakonda") while the shapefile's block_name is upper-case (e.g.
+    # "CHITRAKONDA"), so a direct merge matches nothing.
+    heat_df['_merge_district'] = heat_df[TENDER_DISTRICT_COL].astype(str).str.upper().str.strip()
+    heat_df['_merge_block'] = heat_df[TENDER_BLOCK_COL].astype(str).str.upper().str.strip()
+    od_gdf['_merge_district'] = od_gdf[SHAPE_DISTRICT_COL].astype(str).str.upper().str.strip()
+    od_gdf['_merge_block'] = od_gdf[SHAPE_BLOCK_COL].astype(str).str.upper().str.strip()
 
-data_path = os.getcwd()+'/flood-data-ecosystem-Odisha/Sources/TENDERS/data/'
-od_gdf = gpd.read_file(os.getcwd()+r'\flood-data-ecosystem-Odisha\Maps\od_ids-drr_shapefiles\odisha_block_final.geojson')
-
-flood_tenders_geotagged_df = pd.read_csv(data_path + 'floodtenders_blockgeotagged.csv')
-flood_tenders_geotagged_df = flood_tenders_geotagged_df.merge(od_gdf,
-                                 left_on = ['DISTRICT_FINALISED', 'BLOCK_FINALISED'],
-                                 right_on = ['dtname', 'block_name'],
-                                 how='left')
-#print(flood_tenders_geotagged_df.columns)
-flood_tenders_geotagged_df.rename(columns={'Awarded Price in ₹':'Awarded Value'},inplace = True)
-flood_tenders_geotagged_df['Awarded Value'] = flood_tenders_geotagged_df['Awarded Value'].str.replace(',', '').astype(float)
-
-# Total tender variable
-variable = 'total_tender_awarded_value'
-total_tender_awarded_value_df = flood_tenders_geotagged_df.groupby(['month', 'object_id'])[['Awarded Value']].sum().reset_index()
-total_tender_awarded_value_df = total_tender_awarded_value_df.rename(columns = {'Awarded Value': variable})
-
-for year_month in total_tender_awarded_value_df.month.unique():
-    variable_df_monthly = total_tender_awarded_value_df[total_tender_awarded_value_df.month == year_month]
-    variable_df_monthly = variable_df_monthly[['object_id', variable]]
-    if os.path.exists(data_path+'variables/'+variable):
-        variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-    else:
-        os.mkdir(data_path+'variables/'+variable)
-        variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-
-# Scheme wise tender variables
-variables = flood_tenders_geotagged_df['Scheme'].unique()
-for variable in variables:
-    variable_df = flood_tenders_geotagged_df[flood_tenders_geotagged_df['Scheme'] == variable]
-    variable_df= variable_df.groupby(['month', 'object_id'])[['Awarded Value']].sum().reset_index()
-    
-    variable = str(variable) + '_tenders_awarded_value'
-    variable_df = variable_df.rename(columns = {'Awarded Value': variable})
-    
-    for year_month in variable_df.month.unique():
-        variable_df_monthly = variable_df[variable_df.month == year_month]
-        variable_df_monthly = variable_df_monthly[['object_id', variable]]
-        if os.path.exists(data_path+'variables/'+variable):
-            variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-        else:
-            os.mkdir(data_path+'variables/'+variable)
-            variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-
-
-# Scheme wise tender variables
-variables = flood_tenders_geotagged_df['Response Type'].unique()
-for variable in variables:
-    variable_df = flood_tenders_geotagged_df[flood_tenders_geotagged_df['Response Type'] == variable]
-    variable_df= variable_df.groupby(['month', 'object_id'])[['Awarded Value']].sum().reset_index()
-
-    variable = str(variable) + '_tenders_awarded_value'
-    variable_df = variable_df.rename(columns = {'Awarded Value': variable})
-
-    for year_month in variable_df.month.unique():
-        variable_df_monthly = variable_df[variable_df.month == year_month]
-        variable_df_monthly = variable_df_monthly[['object_id', variable]]
-        if os.path.exists(data_path+'variables/'+variable):
-            variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-        else:
-            os.mkdir(data_path+'variables/'+variable)
-            variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-
-    '''
-    for year_month in variable_df.month.unique():
-        variable_df_monthly = variable_df[variable_df.month == year_month]
-        variable_df_monthly = variable_df_monthly[['object_id', variable]]
-        if os.path.exists(data_path+'variables/'+variable):
-            variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-        else:
-            os.mkdir(data_path+'variables/'+variable)
-            variable_df_monthly.to_csv(data_path+'variables/'+variable+'/{}_{}.csv'.format(variable, year_month), index=False)
-'''
+    heat_df = heat_df.merge(
+        od_gdf,
+        on=['_merge_district', '_merge_block'],
+        how='left',
+    )
+    heat_df = parse_awarded_value(heat_df)
+    build_indicators(heat_df)
+    print('Done.')
+ 
+ 
+if __name__ == '__main__':
+    main()
