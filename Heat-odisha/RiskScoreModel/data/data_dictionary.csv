@@ -1,0 +1,20 @@
+indicatorSlug,indicatorTitle,indicatorDescription,descriptionlen,indicatorCategory,parent,unit,datasource,Dataset Link,visible_on_platform,updateFreq,used_for_model,currently feeding into the model,District Level Aggregation,License,State (Owned),Comments
+heatdays,Heat,Days,Number of heat extreme days,Hazard,Hazard,index,derived,,y,monthly,y,y,mean,,,
+heat-hazard,Heat,Hazard,Standardized hazard index,Hazard,Hazard,index,derived,,y,monthly,y,y,mean,,,55
+sum-population,Population,Total Population,Total number of people in the region,Exposure,Exposure,Number,WORLDPOP,,y,annually,y,y,sum,CC BY 4.0,,60
+sum-aged-population,Elderly Population,Population (65+),Number of people aged 65 and above,Exposure,Exposure,Number,WORLDPOP,,y,annually,y,y,sum,CC BY 4.0,,75
+sum-young-population,Children Population,Population 0-5,Number of people aged 0-5,Exposure,Exposure,Number,WORLDPOP,,y,annually,y,y,sum,CC BY 4.0,,75
+nco-5-9-percent,NCO,5-9 %,Occupational vulnerability proxy,Exposure,Exposure,Ratio,PLFS,,y,annually,y,y,mean,,,70
+exposure,Exposure,Composite,Exposure index derived from population and assets,Exposure,Overall,index,MODEL,,y,monthly,y,y,sum,,,70
+sum-aged-population-sens,Sensitivity,Elderly Sensitivity,Sensitivity input variable,Sensitivity,Sensitivity,variable,,,,annually,y,y,sum,WORLDPOP,,60
+sum-young-population-sens,Sensitivity,Children Sensitivity,Sensitivity input variable,Sensitivity,Sensitivity,variable,,,,annually,y,y,sum,WORLDPOP,,60
+block-nosanitation-hhds-pct,No Sanitation,% Households without sanitation,Households without sanitation facilities,Sensitivity,Sensitivity,Ratio,ANTYODAYA,,y,annually,y,y,mean,GODL,,85
+pct-ncd,NCD,Percentage,Non-communicable disease proxy used in sensitivity,Sensitivity,Sensitivity,Ratio,HEALTH SURVEY,,y,annually,y,y,mean,,,55
+vulnerability-raw,Vulnerability,Raw,Combined sensitivity + inverse coping capacity score,Vulnerability,Vulnerability,Score,MODEL,,y,monthly,y,y,,,,90
+vulnerability-class,Vulnerability,Class,Z-score binned vulnerability index (1-5),Vulnerability,Overall,Score,MODEL,,y,monthly,y,y,,,,75
+health-centres,Health,Centres,Number of health centres aggregated at district level,Coping,Coping,Number,BHARATMAPS,,y,annually,y,y,sum,,,65
+avg-electricity,Electricity Access,Average,Average electricity availability,Coping,Coping,Ratio,ANTYODAYA,,y,annually,y,y,mean,GODL,,60
+block-piped-hhds-pct,Piped Water,%,Households with piped water connection,Coping,Coping,Ratio,ANTYODAYA,,y,annually,y,y,mean,GODL,,75
+coping-capacity,Coping,Capacity,Composite coping capacity index (binned 1-5),Coping,Overall,index,MODEL,,y,monthly,y,y,,,,80
+topsis-score,TOPSIS,Score,Final multi-criteria TOPSIS risk score,Risk,Overall,Score,MODEL,,y,monthly,y,y,,,,60
+risk-class,Risk,Class,Final risk classification (1-5 from TOPSIS z-score),Risk,Overall,class,MODEL,,y,monthly,y,y,,,,70
