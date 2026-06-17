@@ -9,7 +9,7 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 
 variables_data_path = os.getcwd() + r'/master/'
-od_sd = gpd.read_file(r'~/Documents/CDL/repos/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
+od_sd = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
 
 date_range = pd.date_range(start="2023-01-01", end="2024-11-01", freq='MS')
 
@@ -28,7 +28,8 @@ master_df = pd.concat(dfs).reset_index(drop = True)
 print(master_df)
 
 # Variables for model input
-monthly_variables = [#'total_tender_awarded_value',
+monthly_variables = ['total_tender_awarded_value',
+                    # 'lst_raster',
                      #'SOPD_tenders_awarded_value', 
                      #'SDRF_tenders_awarded_value', 
                      #'RIDF_tenders_awarded_value', #'LTIF_tenders_awarded_value', 'CIDF_tenders_awarded_value',
@@ -58,16 +59,16 @@ for variable in monthly_variables:
     master_df = master_df.drop(columns=master_df.filter(regex='_x$|_y$').columns)
 
 '''
-master_df['Relief_Camp_inmates'] = master_df['Male_Camp'].fillna(0).astype(int) \
-    + master_df['Female_Camp'].fillna(0).astype(int) \
-    + master_df['Children_Camp'].fillna(0).astype(int)
-master_df['Human_Live_Lost'] = master_df['Human_Live_Lost_Children'].fillna(0).astype(int) \
-    + master_df['Human_Live_Lost_Female'].fillna(0).astype(int) \
-    + master_df['Human_Live_Lost_Male'].fillna(0).astype(int)
+# master_df['Relief_Camp_inmates'] = master_df['Male_Camp'].fillna(0).astype(int) \
+#     + master_df['Female_Camp'].fillna(0).astype(int) \
+#     + master_df['Children_Camp'].fillna(0).astype(int)
+# master_df['Human_Live_Lost'] = master_df['Human_Live_Lost_Children'].fillna(0).astype(int) \
+#     + master_df['Human_Live_Lost_Female'].fillna(0).astype(int) \
+#     + master_df['Human_Live_Lost_Male'].fillna(0).astype(int)
 
 
-master_df = master_df.drop(['Male_Camp', 'Female_Camp', 'Children_Camp',
-                            'Human_Live_Lost_Male', 'Human_Live_Lost_Children', 'Human_Live_Lost_Female'], axis=1)
+# master_df = master_df.drop(['Male_Camp', 'Female_Camp', 'Children_Camp',
+#                             'Human_Live_Lost_Male', 'Human_Live_Lost_Children', 'Human_Live_Lost_Female'], axis=1)
 
 '''
 #Annual variables
@@ -132,9 +133,9 @@ print(master_df.columns)
 # Impute missing ANTYODAYA vars
 master_df['block_nosanitation_hhds_pct'] = master_df['block_nosanitation_hhds_pct'].fillna(master_df.groupby(['district'])['block_nosanitation_hhds_pct'].transform('mean'))
 master_df['block_piped_hhds_pct'] = master_df['block_piped_hhds_pct'].fillna(master_df.groupby(['district'])['block_piped_hhds_pct'].transform('mean'))
-master_df['avg_tele'] = master_df['avg_tele'].fillna(master_df.groupby(['district'])['avg_tele'].transform('median')) #median
+# master_df['avg_tele'] = master_df['avg_tele'].fillna(master_df.groupby(['district'])['avg_tele'].transform('median')) #median
 master_df['avg_electricity'] = master_df['avg_electricity'].fillna(master_df.groupby(['district'])['avg_electricity'].transform('mean'))
-master_df['net_sown_area_in_hac'] = master_df['net_sown_area_in_hac'].fillna(master_df.groupby(['district'])['net_sown_area_in_hac'].transform('mean'))
+# master_df['net_sown_area_in_hac'] = master_df['net_sown_area_in_hac'].fillna(master_df.groupby(['district'])['net_sown_area_in_hac'].transform('mean'))
 '''
 # Impute missing NDVI and NDBI
 master_df = master_df.sort_values(by=['object_id', 'timeperiod'])
@@ -151,3 +152,31 @@ master_df.to_csv(output_file, index=False)
 #master_df[master_df.duplicated(subset= ['object_id', 'timeperiod'])].to_csv('MASTER_VARIABLES.csv', index=False)
 
 print(master_df.shape)
+
+
+# =========================================================
+# ENSURE LST RASTER IS INCLUDED BEFORE FINAL SAVE
+# (timeperiod-level merge)
+# =========================================================
+
+lst_df = pd.read_csv(variables_data_path + "lst_raster.csv")
+
+lst_df["timeperiod"] = lst_df["land-surface-temperature_raster"].str.extract(r"(\d{4}_\d{2})")[0]
+
+lst_df = lst_df[["timeperiod", "land-surface-temperature_raster"]].drop_duplicates()
+
+master_df = master_df.merge(
+    lst_df,
+    on="timeperiod",
+    how="left"
+)
+
+print("LST raster column appended to master_df")
+
+# =========================================================
+# FINAL SAVE
+# =========================================================
+
+output_file = Path.cwd().parent / "RiskScoreModel" / "data" / "MASTER_VARIABLES.csv"
+master_df.to_csv(output_file, index=False)
+print("LST raster appended using timeperiod only")

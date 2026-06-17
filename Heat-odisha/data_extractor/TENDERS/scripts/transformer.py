@@ -48,7 +48,7 @@ def write_monthly(variable_df, variable, value_col):
         monthly.to_csv(os.path.join(out_dir, '{}_{}.csv'.format(variable, year_month)),
                        index=False)
  
- 
+
 def build_indicators(df):
     """Core transformation: takes the merged (geotagged) heat tenders frame and
     writes all indicators. Kept IO-light so it can be unit-tested."""

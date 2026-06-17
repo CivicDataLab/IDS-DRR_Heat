@@ -1,4 +1,4 @@
-district,timeperiod,sum_population,pop_z,exposure
+district,timeperiod,district_population,pop_z,exposure
 Anugul,2023_01,1436472.6414062502,-0.24414739797317905,3
 Anugul,2023_02,1436472.6414062502,-0.24414739797317905,3
 Anugul,2023_03,1436472.6414062502,-0.24414739797317905,3
