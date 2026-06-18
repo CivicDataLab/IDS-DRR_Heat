@@ -64,83 +64,114 @@ for root, dirs, files in os.walk(main_directory):
             continue
 
         master_df = pd.concat(dfs)
-        master_df.to_csv(main_directory / f'master/{file_name}.csv', index=False)
+        master_df.to_csv(main_directory / f'Heat-odisha/data_extractor/{file_name}.csv', index=False)
 
 
-# IMD (unchanged)
-path = main_directory / 'IMD/data/rain/csv'
-csvs = glob.glob(str(path / '*.csv'))
-dfs = []
+# # IMD (unchanged)
+# path = main_directory / 'IMD/data/rain/csv'
+# csvs = glob.glob(str(path / '*.csv'))
+# dfs = []
 
-for csv in csvs:
-    month = re.findall(r'\d{4}_\d{2}', csv)[0]
-    df = pd.read_csv(csv)
-    df['timeperiod'] = month
-    dfs.append(df)
+# for csv in csvs:
+#     month = re.findall(r'\d{4}_\d{2}', csv)[0]
+#     df = pd.read_csv(csv)
+#     df['timeperiod'] = month
+#     dfs.append(df)
 
-master_df = pd.concat(dfs)
-master_df = master_df.rename(columns={'max': 'max_rain', 'mean':'mean_rain', 'sum':'sum_rain'})
-master_df.to_csv(main_directory / 'master/rainfall.csv', index=False)
-
-
-# BHUVAN (unchanged)
-path = main_directory / 'BHUVAN/data/variables/inundation_pct'
-csvs = glob.glob(str(path / '*.csv'))
-dfs = []
-
-for csv in csvs:
-    month = re.findall(r'\d{4}_\d{2}', csv)[0]
-    df = pd.read_csv(csv)
-    df['timeperiod'] = month
-    dfs.append(df)
-
-if dfs:
-    master_df = pd.concat(dfs)
-    master_df.to_csv(main_directory / 'master/inundation.csv', index=False)
+# master_df = pd.concat(dfs)
+# master_df = master_df.rename(columns={'max': 'max_rain', 'mean':'mean_rain', 'sum':'sum_rain'})
+# master_df.to_csv(main_directory / 'master/rainfall.csv', index=False)
 
 
-# NRSC (unchanged)
-path = main_directory / 'NRSC/data/variables/runoff'
-csvs = glob.glob(str(path / '*.csv'))
-dfs = []
+# # BHUVAN (unchanged)
+# path = main_directory / 'BHUVAN/data/variables/inundation_pct'
+# csvs = glob.glob(str(path / '*.csv'))
+# dfs = []
 
-for csv in csvs:
-    month = re.findall(r'\d{4}_\d{2}', csv)[0]
-    df = pd.read_csv(csv)
-    df['timeperiod'] = month
-    dfs.append(df)
+# for csv in csvs:
+#     month = re.findall(r'\d{4}_\d{2}', csv)[0]
+#     df = pd.read_csv(csv)
+#     df['timeperiod'] = month
+#     dfs.append(df)
 
-if dfs:
-    master_df = pd.concat(dfs)
-    master_df.to_csv(main_directory / 'master/runoff.csv', index=False)
+# if dfs:
+#     master_df = pd.concat(dfs)
+#     master_df.to_csv(main_directory / 'master/inundation.csv', index=False)
+
+
+# # NRSC (unchanged)
+# path = main_directory / 'NRSC/data/variables/runoff'
+# csvs = glob.glob(str(path / '*.csv'))
+# dfs = []
+
+# for csv in csvs:
+#     month = re.findall(r'\d{4}_\d{2}', csv)[0]
+#     df = pd.read_csv(csv)
+#     df['timeperiod'] = month
+#     dfs.append(df)
+
+# if dfs:
+#     master_df = pd.concat(dfs)
+#     master_df.to_csv(main_directory / 'master/runoff.csv', index=False)
 
 # ERA5-LAND HEAT DAYS
 df = pd.read_csv(
-    main_directory / 'era5_land/data/variables/heatdays.csv'
+    main_directory / 'Heat-odisha/data_extractor/era5_land/data/variables/heatdays.csv'
 )
 
 df.to_csv(
-    main_directory / 'master/heatdays.csv',
+    main_directory / 'Heat-odisha/data_extractor/master/heatdays.csv',
     index=False
 )
 
 
 # PLFS
 df = pd.read_csv(
-    main_directory / 'plfs/variables/plfs_sunexposed_pct.csv'
+    main_directory / 'Heat-odisha/data_extractor/plfs/data/variables/plfs_sunexposed_pct.csv'
 )
 
 df.to_csv(
-    main_directory / 'master/plfs_sunexposed_pct.csv',
+    main_directory / 'Heat-odisha/data_extractor/master/plfs_sunexposed_pct.csv',
     index=False
 )
 
 # NFHS
 df = pd.read_csv(
-    main_directory / 'nfhs/variables/nfhs_ncd_pct.csv'
+    main_directory / 'Heat-odisha/data_extractor/nfhs/data/variables/nfhs_ncd_pct.csv'
 )
 
 df.to_csv(
-    main_directory / 'master/nfhs_ncd_pct.csv',
+    main_directory / 'Heat-odisha/data_extractor/master/nfhs_ncd_pct.csv',
     index=False
 )
+
+# lst_naming
+df = pd.read_csv(
+    main_directory / 'Heat-odisha/data_extractor/modis_aqua/data/variables/lst_raster.csv'
+)
+
+df.to_csv(
+    main_directory / 'Heat-odisha/data_extractor/master/lst_raster.csv',
+    index=False
+)
+
+# ...existing code...
+
+# TENDERS - total_tender_awarded_value
+path = main_directory / 'Heat-odisha/data_extractor/TENDERS/data/variables/total_tender_awarded_value'
+tender_csvs = list(path.glob('total_tender_awarded_value_*.csv'))
+tender_dfs = []
+
+for csv in tender_csvs:
+    date_match = re.findall(r'(\d{4}_\d{2})', csv.name)
+    if date_match:
+        timeperiod = date_match[0]
+        df = pd.read_csv(csv)
+        df['timeperiod'] = timeperiod
+        tender_dfs.append(df)
+
+if tender_dfs:
+    tender_master_df = pd.concat(tender_dfs)
+    tender_master_df.to_csv(main_directory / 'Heat-odisha/data_extractor/master/total_tender_awarded_value.csv', index=False)
+
+# ...existing code...
