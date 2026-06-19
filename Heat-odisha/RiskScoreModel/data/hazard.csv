@@ -1,4 +1,4 @@
-district,timeperiod,district_mean_heatday,heat_zscore,heat_hazard
+district,timeperiod,heat_days_score,heat_zscore,heat_hazard
 Anugul,2023_01,0.0,0.0,3
 Anugul,2023_02,0.0,-0.44561955240287865,3
 Anugul,2023_03,11.563156981906982,0.06436401393956256,3
