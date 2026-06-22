@@ -8,7 +8,7 @@ from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
-variables_data_path = os.getcwd() + r'/master/'
+variables_data_path = os.getcwd() + r'/Heat-odisha/data_extractor/master/'
 od_sd = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
 
 date_range = pd.date_range(start="2023-01-01", end="2024-11-01", freq='MS')
@@ -147,7 +147,7 @@ master_df['mean_ndbi'] = master_df['mean_ndbi'].ffill()
 master_df = master_df.fillna(0)
 # Drop columns with suffixes "_x" and "_y"
 master_df = master_df.loc[:, ~master_df.columns.str.endswith('_x') & ~master_df.columns.str.endswith('_y')]
-output_file = Path.cwd().parent / "RiskScoreModel" / "data" / "MASTER_VARIABLES.csv"
+output_file = Path.cwd().parent / "IDS-DRR_Heat" / "Heat-odisha" / "RiskScoreModel" / "data" / "MASTER_VARIABLES.csv"
 master_df.to_csv(output_file, index=False)
 #master_df[master_df.duplicated(subset= ['object_id', 'timeperiod'])].to_csv('MASTER_VARIABLES.csv', index=False)
 
@@ -161,9 +161,9 @@ print(master_df.shape)
 
 lst_df = pd.read_csv(variables_data_path + "lst_raster.csv")
 
-lst_df["timeperiod"] = lst_df["land-surface-temperature_raster"].str.extract(r"(\d{4}_\d{2})")[0]
+lst_df["timeperiod"] = lst_df["land-surface-temperature-raster"].str.extract(r"(\d{4}_\d{2})")[0]
 
-lst_df = lst_df[["timeperiod", "land-surface-temperature_raster"]].drop_duplicates()
+lst_df = lst_df[["timeperiod", "land-surface-temperature-raster"]].drop_duplicates()
 
 master_df = master_df.merge(
     lst_df,
@@ -177,6 +177,6 @@ print("LST raster column appended to master_df")
 # FINAL SAVE
 # =========================================================
 
-output_file = Path.cwd().parent / "RiskScoreModel" / "data" / "MASTER_VARIABLES.csv"
+# output_file = Path.cwd().parent / "Heat-odisha" / "RiskScoreModel" / "data" / "MASTER_VARIABLES.csv"
 master_df.to_csv(output_file, index=False)
 print("LST raster appended using timeperiod only")

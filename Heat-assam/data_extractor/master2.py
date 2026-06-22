@@ -1,0 +1,169 @@
+import pandas as pd
+import os
+import glob
+import datetime
+import geopandas as gpd
+import warnings
+warnings.filterwarnings("ignore")
+
+variables_data_path = os.getcwd() + '/Heat-assam/data_extractor/master/'
+print(variables_data_path)
+assam_rc = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-assam/data_extractor/Maps/Geojson/assam_rc_2024-11.geojson')
+
+date_range = pd.date_range(start="2021-04-01", end="2026-05-31", freq='MS')
+
+# Format the date values as "YYYY_MM" strings
+formatted_dates = [date.strftime('%Y_%m') for date in date_range]
+
+# Create a Pandas DataFrame with the values
+dfs = []
+for year_month in formatted_dates:
+    df = assam_rc[['object_id', 'dtname', 'are_new']]
+    df.columns = ['object_id', 'dtname', 'rc_area']
+    df['timeperiod'] = year_month
+    dfs.append(df)
+master_df =  pd.concat(dfs).reset_index(drop = True)
+#df = pd.DataFrame({'timeperiod': formatted_dates})
+print(master_df)
+
+
+# Variables for model input
+monthly_variables = [#'total_tender_awarded_value','erosion_tenders_awarded_value',
+                    #  'SOPD_tenders_awarded_value','SDRF_sanctions_awarded_value', 
+                    #  'SDRF_tenders_awarded_value', 'RIDF_tenders_awarded_value', 'LTIF_tenders_awarded_value', 'CIDF_tenders_awarded_value',
+                    #   'Preparedness Measures_tenders_awarded_value', 'Immediate Measures_tenders_awarded_value', 'Others_tenders_awarded_value','Repair and Restoration_tenders_awarded_value',
+                    #   'Total_Animal_Washed_Away', 'Total_Animal_Affected',
+                    #   'Population_affected_Total', 'Crop_Area',
+                    #   'Male_Camp', 'Female_Camp', 'Children_Camp',
+                    #  'Total_House_Fully_Damaged',
+                    #  'Human_Live_Lost','Human_Live_Lost_Children', 'Human_Live_Lost_Female', 'Human_Live_Lost_Male',
+                    #  'Embankments affected', 'Roads', 'Bridge', 'Embankment breached',
+                    #  'rainfall',
+                    #  'ndvi_rc', 'ndbi_rc',
+                    #  'inundation_pct', 'riverlevel',
+                    #  'total_expenditure_value','SOPD_expenditure_value',
+                    #  'SDRF_expenditure_value','Immediate Measures_expenditure_value','Others_expenditure_value','SOPD_expenditure_value', 'Repair and Restoration_expenditure_value',
+                    #  'Relief Camps','Relief Centers','Relief Inmates'
+                     'heatdays'
+                     ]
+
+for variable in monthly_variables:
+    #print(variable)        
+    variable_df = pd.read_csv(variables_data_path + variable + '.csv')
+    # if variable in ['ndvi_rc', 'ndbi_rc']:
+    #     variable_df = variable_df.rename(columns = {'mean':'mean_'+variable[:4]})
+    variable_df = variable_df.drop_duplicates()
+    master_df = master_df.merge(variable_df, on=['object_id', 'timeperiod'], how='left',suffixes=('_x', '_y'))
+    master_df = master_df.drop(columns=master_df.filter(regex='_x$|_y$').columns)
+
+# master_df['Relief_Camp_inmates'] = master_df['Male_Camp'].fillna(0).astype(int) \
+#     + master_df['Female_Camp'].fillna(0).astype(int) \
+#     + master_df['Children_Camp'].fillna(0).astype(int)
+
+# master_df['Human_Live_Lost'] = master_df['Human_Live_Lost'].fillna(0).astype(int)# \
+#    + master_df['Human_Live_Lost_Female'].fillna(0).astype(int) \
+#    + master_df['Human_Live_Lost_Male'].fillna(0).astype(int)
+
+
+#master_df = master_df.drop(['Male_Camp', 'Female_Camp', 'Children_Camp'], axis=1)
+                            #'Human_Live_Lost_Male', 'Human_Live_Lost_Children', 'Human_Live_Lost_Female'], axis=1)
+
+
+# Annual variables
+master_df['year'] = master_df['timeperiod'].str[:4].astype(int)
+annual_variables = [
+                    # 'mean_sex_ratio',
+                    'sum_aged_population', 'sum_young_population', 'sum_population',
+                    # 'final_lu'
+                    ]
+
+for variable in annual_variables:
+    print(variable)
+    variable_df = pd.read_csv(variables_data_path + variable + '.csv')
+    variable_df = variable_df.rename(columns = {'timeperiod': 'year'})
+    master_df = master_df.merge(variable_df,
+                                on = ['object_id', 'year'],
+                                how='left')
+
+# one-time variables
+onetime_variables = [
+                    # 'Schools', 
+                    'HealthCenters', 
+                    'plfs_sunexposed_pct',
+                    #  'RailLengths', 'RoadLengths',
+                    #  'gcn250_average', 'elevation',
+                    'antyodaya_variables',
+                    'nfhs_ncd_pct'
+
+                    #  'distance_from_river_polygon', 'drainage_density'
+                    ]
+master_df['year'] = ''
+print(master_df)
+#master_df.to_csv(r'diagnostic.csv')
+
+for variable in onetime_variables:
+    print(variable)
+    variable_df = pd.read_csv(variables_data_path + variable + '.csv')
+    variable_df = variable_df.rename(columns = {'timeperiod': 'year'})
+    variable_df['year'] = ''
+    print(f"master_df shape: {master_df.shape}")
+    print(f"variable_df shape: {variable_df.shape}")
+    master_df = master_df.merge(variable_df,
+                                on = ['object_id', 'year'],
+                                how='left', suffixes=('_x', '_y'))
+    master_df = master_df.drop(columns=master_df.filter(regex='_x$|_y$').columns)
+
+
+
+# master_df = master_df.drop(['year', 'count_gcn250_pixels',
+                            # 'count_bhuvan_pixels', 'count_inundated_pixels'], axis=1)
+
+#master_df['year'] = master_df['timeperiod'].str[:4]
+#master_df['month'] = master_df['timeperiod'].str[-2:]
+
+#mean of rc
+# master_df['max_rain'] = master_df['max_rain'].fillna(master_df.groupby(['object_id'])['max_rain'].transform('mean'))
+# master_df['mean_rain'] = master_df['mean_rain'].fillna(master_df.groupby(['object_id'])['mean_rain'].transform('mean'))
+# master_df['sum_rain'] = master_df['sum_rain'].fillna(master_df.groupby(['object_id'])['sum_rain'].transform('mean'))
+
+# Impute missing ANTYODAYA vars
+master_df['rc_nosanitation_hhds_pct'] = master_df['rc_nosanitation_hhds_pct'].fillna(master_df.groupby(['dtname'])['rc_nosanitation_hhds_pct'].transform('mean'))
+master_df['rc_piped_hhds_pct'] = master_df['rc_piped_hhds_pct'].fillna(master_df.groupby(['dtname'])['rc_piped_hhds_pct'].transform('mean'))
+# master_df['avg_tele'] = master_df['avg_tele'].fillna(master_df.groupby(['dtname'])['avg_tele'].transform('median')) #median
+master_df['avg_electricity'] = master_df['avg_electricity'].fillna(master_df.groupby(['dtname'])['avg_electricity'].transform('mean'))
+# master_df['net_sown_area_in_hac'] = master_df['net_sown_area_in_hac'].fillna(master_df.groupby(['dtname'])['net_sown_area_in_hac'].transform('mean'))
+
+# Impute missing NDVI and NDBI
+# master_df = master_df.sort_values(by=['object_id', 'timeperiod'])
+# master_df['mean_ndvi'] = master_df['mean_ndvi'].ffill()
+# master_df['mean_ndbi'] = master_df['mean_ndbi'].ffill()
+
+# Impute all other vars with 0
+master_df = master_df.fillna(0)
+
+
+# =========================================================
+# ENSURE LST RASTER IS INCLUDED BEFORE FINAL SAVE
+# (timeperiod-level merge)
+# =========================================================
+
+lst_df = pd.read_csv(variables_data_path + "lst_raster.csv")
+
+lst_df["timeperiod"] = lst_df["land-surface-temperature-raster"].str.extract(r"(\d{4}_\d{2})")[0]
+
+lst_df = lst_df[["timeperiod", "land-surface-temperature-raster"]].drop_duplicates()
+
+master_df = master_df.merge(
+    lst_df,
+    on="timeperiod",
+    how="left"
+)
+
+print("LST raster column appended to master_df")
+
+#master_df.to_csv(os.getcwd() + '/RiskScoreModel/data/MASTER_VARIABLES.csv', index=False)
+master_df.to_csv(os.getcwd() + '/Heat-assam/RiskScoreModel/data/MASTER_VARIABLES.csv', index=False)
+
+#master_df[master_df.duplicated(subset= ['object_id', 'timeperiod'])].to_csv('MASTER_VARIABLES.csv', index=False)
+
+print(master_df.shape)
