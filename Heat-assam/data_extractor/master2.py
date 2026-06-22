@@ -44,7 +44,8 @@ monthly_variables = [#'total_tender_awarded_value','erosion_tenders_awarded_valu
                     #  'total_expenditure_value','SOPD_expenditure_value',
                     #  'SDRF_expenditure_value','Immediate Measures_expenditure_value','Others_expenditure_value','SOPD_expenditure_value', 'Repair and Restoration_expenditure_value',
                     #  'Relief Camps','Relief Centers','Relief Inmates'
-                     'heatdays'
+                     'heatdays',
+                     'land_surface_temperature'
                      ]
 
 for variable in monthly_variables:
