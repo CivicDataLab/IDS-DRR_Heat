@@ -155,6 +155,14 @@ df.to_csv(
     index=False
 )
 
+df = pd.read_csv(
+    main_directory / 'Heat-odisha/data_extractor/modis_aqua/data/variables/land_surface_temperature.csv'
+    )
+df.to_csv(
+    main_directory / 'Heat-odisha/data_extractor/master/land_surface_temperature.csv', 
+    index=False)
+
+
 # ...existing code...
 
 # TENDERS - total_tender_awarded_value

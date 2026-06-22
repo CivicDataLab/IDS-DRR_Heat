@@ -45,7 +45,8 @@ monthly_variables = ['total_tender_awarded_value',
                      #'rainfall','runoff',
                      #'ndvi_subdis', 'ndbi_subdis',
                      #'inundation', #'riverlevel'
-                     'heatdays'
+                     'heatdays',
+                     'land_surface_temperature',
                      ]
 
 for variable in monthly_variables:

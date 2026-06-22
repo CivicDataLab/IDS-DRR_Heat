@@ -129,7 +129,6 @@ df.to_csv(
     index=False
 )
 
-
 df = pd.read_csv(
     main_directory / 'modis_aqua/data/variables/land_surface_temperature.csv'
 )
