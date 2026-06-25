@@ -120,12 +120,20 @@ df.to_csv(
     index=False
 )
 
-# lst_naming
+# lst
 df = pd.read_csv(
     main_directory / 'modis_aqua/data/variables/lst_raster.csv'
 )
-
 df.to_csv(
     main_directory / 'master/lst_raster.csv',
+    index=False
+)
+
+df = pd.read_csv(
+    main_directory / 'modis_aqua/data/variables/land_surface_temperature.csv'
+)
+
+df.to_csv(
+    main_directory / 'master/land_surface_temperature.csv',
     index=False
 )

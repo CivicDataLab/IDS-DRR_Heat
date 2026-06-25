@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 variables_data_path = os.getcwd() + r'/Heat-odisha/data_extractor/master/'
 od_sd = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
 
-date_range = pd.date_range(start="2023-01-01", end="2024-11-01", freq='MS')
+date_range = pd.date_range(start="2021-01-01", end="2026-03-01", freq='MS')
 
 # Format the date values as "YYYY_MM" strings
 formatted_dates = [date.strftime('%Y_%m') for date in date_range]
@@ -45,7 +45,8 @@ monthly_variables = ['total_tender_awarded_value',
                      #'rainfall','runoff',
                      #'ndvi_subdis', 'ndbi_subdis',
                      #'inundation', #'riverlevel'
-                     'heatdays'
+                     'heatdays',
+                     'land_surface_temperature',
                      ]
 
 for variable in monthly_variables:
@@ -92,7 +93,7 @@ print(master_df.columns)
 
 # one-time variables
 onetime_variables = ['HealthCenters',#'gcn250_average', 
-                      'antyodaya_variables', 'plfs_sunexposed_pct', 'nfhs_ncd_pct']
+                      'antyodaya_variables', 'plfs_sunexposed_pct', 'nfhs']
                      #'distance_from_river_polygon',]
 master_df['year'] = ''
 
@@ -106,16 +107,19 @@ for variable in onetime_variables:
     print(f"master_df shape: {master_df.shape}")
     print(f"variable_df shape: {variable_df.shape}")
     master_df = master_df.merge(variable_df,
-                                on = ['object_id', 'year']
+                                on = ['object_id',
+                                    #    'year'
+                                      ]
                                 ,how='left')
     master_df = master_df.drop(columns=master_df.filter(regex='_y$').columns)
     master_df.columns = master_df.columns.str.replace('_x$', '', regex=True)
-
-
+    if variable == 'nfhs_ncd_pct':
+        print(variable_df)
+        print("hereeee")
 
 #master_df = master_df.drop([#'year', #'count_gcn250_pixels',
 #                            'count_bhuvan_pixels', 'count_inundated_pixels'], axis=1)
-
+print(master_df['pct_ncd'])
 #master_df['year'] = master_df['timeperiod'].str[:4]
 #master_df['month'] = master_df['timeperiod'].str[-2:]
 print(master_df.columns)
@@ -155,7 +159,7 @@ print(master_df.shape)
 
 
 # =========================================================
-# ENSURE LST RASTER IS INCLUDED BEFORE FINAL SAVE
+# LST RASTER
 # (timeperiod-level merge)
 # =========================================================
 
