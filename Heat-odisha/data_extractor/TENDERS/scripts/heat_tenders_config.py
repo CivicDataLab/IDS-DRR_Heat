@@ -5,14 +5,8 @@
 # tagged just because "light" overlaps with other terms).
 # ---------------------------------------------------------------------------
 NEGATIVE_KEYWORDS = [
-    'floodlight', 'flood light', 'street light', 'solar street light', 'high mast light',
-    'gas pipeline', 'sports complex', 'stadium', 'cricket', 'football', 'volleyball',
-    'examination hall', 'cremation ground', 'crematorium', 'burial ground',
-    'election', 'covid', 'vaccination', 'wedding hall', 'marriage hall', 'kalyan mandap',
-
-    'boundary wall', 'compound wall', 'staff quarter', 'quarter building',
-    'drug warehouse', 'drug ware house', 'godown',
-    'bio medical waste', 'biomedical waste', 'bmw management', 'waste management',
+    'stadium', 'football', 'cremation ground', 'crematorium',
+    'boundary wall', 'compound wall', 'godown',
 ]
 
 # ---------------------------------------------------------------------------
@@ -183,4 +177,50 @@ SEASON_MONTHS = {
     "Summer / Heatwave (Mar-Jun)": [3, 4, 5, 6],
     "Monsoon (Jul-Sep)": [7, 8, 9],
     "Post-Monsoon / Winter (Oct-Dec)": [10, 11, 12],
+}
+
+# ---------------------------------------------------------------------------
+# Heat-specific keyword set (CURATED, not group-derived).
+# Lesson from testing: deriving this from whole thematic groups was wrong,
+# because the "Heatwave & Emergency Response" group contains generic disaster
+# terms (ambulance, first aid, emergency response) and the word "saline" is a
+# homonym -- in Odisha tenders it almost always means a SALINE EMBANKMENT
+# (coastal saltwater flood protection), not medical saline. Those produced a
+# fresh batch of false positives. This list is therefore an explicit whitelist
+# of terms whose presence is, on its own, a reliable heat-response signal.
+# Deliberately EXCLUDED as too generic/ambiguous (kept as positives, not as
+# strong signals): saline, ambulance, first aid, emergency response, iv fluid,
+# high temperature, rising temperature, climate resilient, canopy, awning,
+# air cooler, white painting, green space, mobile health unit,
+# rapid response team, early warning system.
+# ---------------------------------------------------------------------------
+HEAT_SPECIFIC_KEYWORDS = {
+    # heat events / illness
+    'heatwave', 'heat wave', 'heat-wave', 'heat stress', 'heat stroke',
+    'heat action plan', 'heat resilience', 'heat resilient', 'extreme heat',
+    'heat resistant', 'heat related illness', 'heat illness', 'heat exhaustion',
+    'heat cramp', 'heat rash', 'heat alert', 'heat warning', 'heat advisory',
+    'heat hotline', 'satark', 'sunstroke', 'sun stroke',
+    'heat stroke treatment', 'heat stroke ward', 'heat stroke bed',
+    'cooling centre', 'cooling center', 'relief chamber',
+    # reflective / passive cooling
+    'cool roof', 'white roof', 'white topping', 'roof insulation',
+    'thermal insulation', 'heat reflective', 'reflective coating',
+    'albedo paint', 'albedo painting', 'reflective paint', 'green roof',
+    'green roofing', 'passive cooling', 'k glass', 'doubly glazed glass',
+    'white china mosaic', 'lime based whitewash', 'white tarp', 'acrylic resin coating',
+    # heat-relief water / hydration
+    'water kiosk', 'water atm', 'hydration point', 'hydration centre', 'hydration center',
+    # NOTE: 'jalachhatra' deliberately NOT a strong signal -- in this corpus it
+    # is an irrigation-canal name ("Jalachhatra Minor"), not a water kiosk.
+    'jala jogana kendra', 'jal jogana kendra', 'jal seva shibira',
+    # heat-relief shelter / shade
+    # NOTE: 'rest shade'/'rest shed' demoted from strong -- in this corpus the
+    # matches are overwhelmingly administrative ("Revenue Rest Shade",
+    # "Attendant Rest shade at DHH"), not heat-relief shelters. Needs a
+    # co-occurring heat/cool qualifier to be reliable.
+    'cool shelter', 'cool resting space', 'cool resting shed',
+    'shade net', 'shade structure',
+    # heat-specific awareness
+    'swasthya kantha', 'mock drill',
 }
