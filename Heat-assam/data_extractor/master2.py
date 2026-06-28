@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 variables_data_path = os.getcwd() + '/Heat-assam/data_extractor/master/'
 print(variables_data_path)
-assam_rc = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-assam/data_extractor/Maps/Geojson/assam_rc_2024-11.geojson')
+assam_rc = gpd.read_file(os.getcwd() + r'/Heat-assam/data_extractor/Maps/Geojson/assam_rc_2024-11.geojson')
 
 date_range = pd.date_range(start="2021-04-01", end="2026-05-31", freq='MS')
 
@@ -28,16 +28,10 @@ print(master_df)
 
 
 # Variables for model input
-monthly_variables = [#'total_tender_awarded_value','erosion_tenders_awarded_value',
+monthly_variables = ['total_tender_awarded_value',
                     #  'SOPD_tenders_awarded_value','SDRF_sanctions_awarded_value', 
                     #  'SDRF_tenders_awarded_value', 'RIDF_tenders_awarded_value', 'LTIF_tenders_awarded_value', 'CIDF_tenders_awarded_value',
                     #   'Preparedness Measures_tenders_awarded_value', 'Immediate Measures_tenders_awarded_value', 'Others_tenders_awarded_value','Repair and Restoration_tenders_awarded_value',
-                    #   'Total_Animal_Washed_Away', 'Total_Animal_Affected',
-                    #   'Population_affected_Total', 'Crop_Area',
-                    #   'Male_Camp', 'Female_Camp', 'Children_Camp',
-                    #  'Total_House_Fully_Damaged',
-                    #  'Human_Live_Lost','Human_Live_Lost_Children', 'Human_Live_Lost_Female', 'Human_Live_Lost_Male',
-                    #  'Embankments affected', 'Roads', 'Bridge', 'Embankment breached',
                     #  'rainfall',
                     #  'ndvi_rc', 'ndbi_rc',
                     #  'inundation_pct', 'riverlevel',
@@ -49,13 +43,19 @@ monthly_variables = [#'total_tender_awarded_value','erosion_tenders_awarded_valu
                      ]
 
 for variable in monthly_variables:
-    #print(variable)        
+    #print(variable)
     variable_df = pd.read_csv(variables_data_path + variable + '.csv')
     # if variable in ['ndvi_rc', 'ndbi_rc']:
     #     variable_df = variable_df.rename(columns = {'mean':'mean_'+variable[:4]})
     variable_df = variable_df.drop_duplicates()
-    master_df = master_df.merge(variable_df, on=['object_id', 'timeperiod'], how='left',suffixes=('_x', '_y'))
-    master_df = master_df.drop(columns=master_df.filter(regex='_x$|_y$').columns)
+
+    # Don't let an incoming file's copy of a column (e.g. dtname) overwrite
+    # the one already in master_df - a stale/incomplete variable file would
+    # silently blank it out for any object_id it doesn't cover.
+    dup_cols = [c for c in variable_df.columns if c in master_df.columns and c not in ['object_id', 'timeperiod']]
+    variable_df = variable_df.drop(columns=dup_cols)
+
+    master_df = master_df.merge(variable_df, on=['object_id', 'timeperiod'], how='left')
 
 # master_df['Relief_Camp_inmates'] = master_df['Male_Camp'].fillna(0).astype(int) \
 #     + master_df['Female_Camp'].fillna(0).astype(int) \
@@ -107,12 +107,18 @@ for variable in onetime_variables:
     variable_df = pd.read_csv(variables_data_path + variable + '.csv')
     variable_df = variable_df.rename(columns = {'timeperiod': 'year'})
     variable_df['year'] = ''
+
+    # Don't let an incoming file's copy of a column (e.g. dtname, revenue_ci)
+    # overwrite the one already in master_df - a stale/incomplete variable
+    # file would silently blank it out for any object_id it doesn't cover.
+    dup_cols = [c for c in variable_df.columns if c in master_df.columns and c not in ['object_id', 'year']]
+    variable_df = variable_df.drop(columns=dup_cols)
+
     print(f"master_df shape: {master_df.shape}")
     print(f"variable_df shape: {variable_df.shape}")
     master_df = master_df.merge(variable_df,
                                 on = ['object_id', 'year'],
-                                how='left', suffixes=('_x', '_y'))
-    master_df = master_df.drop(columns=master_df.filter(regex='_x$|_y$').columns)
+                                how='left')
 
 
 

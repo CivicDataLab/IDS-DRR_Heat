@@ -1,0 +1,7 @@
+district_final_risk_score.csv
+  undocumented columns: ['land-surface-temperature-raster', 'men-bp', 'men-sugar', 'topsis-score', 'total-hhd', 'total-tender-awarded-value-fy-cumsum', 'women-bp', 'women-sugar']
+  missing documented indicators: []
+
+final_risk_score.csv
+  undocumented columns: ['HealthCenters', 'avg-tele', 'block-area', 'block-name', 'block-nosanitation-hhds-pct', 'block-piped-hhds-pct', 'land-surface-temperature-raster', 'mean-heatday', 'men-bp', 'men-sugar', 'nco-5-9-percent-estimated', 'net-sown-area-in-hac', 'topsis-score', 'total-hhd', 'total-tender-awarded-value-fy-cumsum', 'women-bp', 'women-sugar', 'year']
+  missing documented indicators: ['health-centres-count', 'heat-days-score', 'nosanitation-hhds-pct', 'piped-hhds-pct', 'workers-affected-pct']

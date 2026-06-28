@@ -35,12 +35,6 @@ for root, dirs, files in os.walk(main_directory):
                 timeperiod = ''
                 file_name = csv.stem
 
-            elif any(folder in str(csv.parts) for folder in ['WORLDPOP']):
-                year_match = re.findall(r'\d{4}', csv.name)
-                if year_match:
-                    timeperiod = year_match[0]
-                    file_name = csv.stem[:-5]
-
             elif any("SENTINEL" in str(parent) for parent in csv.parents):
                 date_match = re.findall(r'\d{4}-\d{2}-\d{2}', csv.name)
                 if date_match:
@@ -181,5 +175,24 @@ for csv in tender_csvs:
 if tender_dfs:
     tender_master_df = pd.concat(tender_dfs)
     tender_master_df.to_csv(main_directory / 'Heat-odisha/data_extractor/master/total_tender_awarded_value.csv', index=False)
+
+# WORLDPOP - annual age/sex population variables
+worldpop_variables_path = main_directory / 'Heat-odisha/data_extractor/WORLDPOP/data/variables'
+worldpop_variables = ['sum_aged_population', 'sum_young_population', 'sum_population', 'mean_sex_ratio']
+
+for variable in worldpop_variables:
+    var_path = worldpop_variables_path / variable
+    csvs = sorted(var_path.glob(f'{variable}_*.csv'))
+    dfs = []
+
+    for csv in csvs:
+        year = csv.stem.rsplit('_', 1)[-1]
+        df = pd.read_csv(csv)
+        df['timeperiod'] = int(year)
+        dfs.append(df)
+
+    if dfs:
+        worldpop_master_df = pd.concat(dfs, ignore_index=True)
+        worldpop_master_df.to_csv(main_directory / f'Heat-odisha/data_extractor/master/{variable}.csv', index=False)
 
 # ...existing code...

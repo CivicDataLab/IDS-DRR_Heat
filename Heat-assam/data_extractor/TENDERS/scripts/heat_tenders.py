@@ -55,6 +55,8 @@ from heat_tenders_config import (
     SCHEME_KEYWORDS,
     EXCLUDED_DEPARTMENTS,
     SEASON_MONTHS,
+    DRINKING_WATER_AMBIGUOUS_KEYWORDS,
+    DRINKING_WATER_QUALIFIERS,
 )
 
 # ---------------------------------------------------------------------------
@@ -112,7 +114,28 @@ def build_tender_slug(row):
     return ' '.join(parts)
 
 
+_AMBIGUOUS_WATER_NORM = {normalize_keyword(k) for k in DRINKING_WATER_AMBIGUOUS_KEYWORDS}
+_WATER_QUALIFIER_PATTERNS = [
+    r'\b%s\b' % re.escape(normalize_keyword(q)).replace(r'\ ', r'\s+')
+    for q in DRINKING_WATER_QUALIFIERS
+]
+
+
+def _has_drinking_water_qualifier(text):
+    return any(re.search(pattern, text) for pattern in _WATER_QUALIFIER_PATTERNS)
+
+
 def count_keyword_hits(text, keywords):
+    """Count keyword occurrences in text.
+
+    Ambiguous water-infrastructure terms (tube well, piped water supply, ...)
+    describe works that are just as often Irrigation Dept's PMKSY-HKKP
+    (farm irrigation) as PHE's drinking-water schemes (see
+    DRINKING_WATER_AMBIGUOUS_KEYWORDS in heat_tenders_config.py). They only
+    count as a hit when an explicit drinking-water qualifier (PWSS/JJM/NWQSM/
+    "drinking water"/...) also appears in the same tender text.
+    """
+    has_qualifier = None  # computed lazily, at most once per call
     hits = {}
     for keyword in keywords:
         norm = normalize_keyword(keyword)
@@ -121,7 +144,13 @@ def count_keyword_hits(text, keywords):
             continue
         # collapse internal whitespace so multi-word keywords are robust
         pattern = r'\b%s\b' % re.escape(norm).replace(r'\ ', r'\s+')
-        hits[keyword] = len(re.findall(pattern, text))
+        count = len(re.findall(pattern, text))
+        if count and norm in _AMBIGUOUS_WATER_NORM:
+            if has_qualifier is None:
+                has_qualifier = _has_drinking_water_qualifier(text)
+            if not has_qualifier:
+                count = 0
+        hits[keyword] = count
     return hits
 
 

@@ -70,19 +70,7 @@ def build_indicators(df):
     write_monthly(total_df, variable, variable)
     print('  wrote indicator:', variable)
 
-    # 2. One indicator per funding Scheme (skip NaN / blank)
-    if 'Scheme' in df.columns:
-        for scheme in df['Scheme'].dropna().unique():
-            if str(scheme).strip() in ('', 'nan', 'None'):
-                continue
-            sdf = df[df['Scheme'] == scheme]
-            sdf = sdf.groupby(['month', 'object_id'])[['Awarded Value']].sum().reset_index()
-            variable = '{}_tenders_awarded_value'.format(str(scheme).strip())
-            sdf = sdf.rename(columns={'Awarded Value': variable})
-            write_monthly(sdf, variable, variable)
-            print('  wrote indicator:', variable)
-
-    # 3. One indicator per heat-response theme (skip NaN / "Others")
+    # 2. One indicator per heat-response theme (skip NaN / "Others")
     if 'Response Type' in df.columns:
         for rtype in df['Response Type'].dropna().unique():
             if str(rtype).strip() in ('', 'nan', 'None', 'Others'):

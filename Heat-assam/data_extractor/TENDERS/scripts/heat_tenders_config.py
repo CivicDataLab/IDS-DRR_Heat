@@ -16,16 +16,43 @@ NEGATIVE_KEYWORDS = [
     'bio medical waste', 'biomedical waste', 'waste management',
 
     # --- Assam-specific noise (predicted; verify against the corpus) ---------
-    # Tea is a commercial crop, not a heat measure. Without these, tea-estate
-    # works would over-fire on the greening term 'plantation'. Trade-off: this
-    # also suppresses genuine greening *inside* tea-belt wards -- revisit if
-    # tea-area cooling tenders are something you want to keep. [UHE]
+    # Tea is a commercial crop, tea-estate works would over-fire on the greening term 'plantation'.
+    # This also suppresses genuine greening *inside* tea-belt wards
     'tea garden', 'tea estate',
     # Flood / riverbank-erosion works dominate the Assam tender stream and are
     # not heat-response measures. They overlap only weakly with heat positives,
     # so excluding them is mostly defensive. [UHE: Brahmaputra/Barak flood risk]
     'embankment', 'anti erosion', 'anti-erosion', 'riverbank protection',
     'porcupine', 'geo bag', 'geobag', 'sluice gate', 'dyke', 'breach closing',
+]
+
+# ---------------------------------------------------------------------------
+# Drinking Water & Hydration: ambiguous infra terms + their gate.
+#
+# Prevent fals positives from Irrigation Dept's PMKSY-HKKP ("Har Khet Ko
+# Pani") works, which are for farm irrigation, not drinking water. Genuine
+# drinking-water schemes are still being included. PHE's piped-water-supply 
+# almost always carry one of the scheme markers below (PWSS / JJM / NWQSM 
+# are India's standard rural-drinking-water scheme names), which IS an 
+# explicit, unambiguous drinking-water signal.
+#
+# So these terms only count as a positive hit when they co-occur, in the same
+# tender text, with a DRINKING_WATER_QUALIFIER. See heat_tenders.py
+# count_keyword_hits() for the gating logic.
+# ---------------------------------------------------------------------------
+DRINKING_WATER_AMBIGUOUS_KEYWORDS = [
+    'tube well', 'tubewell', 'borewell', 'bore well',
+    'hand pump', 'handpump', 'overhead tank', 'oh tank',
+    'stand post', 'piped water supply', 'water supply scheme',
+    # dual-use (deployed for summer scarcity AND year-round) -- review:
+    'water tanker',               # [EHW] Tripura/Arunachal deploy tankers in heat
+    'water sprinkling',
+   
+]
+
+DRINKING_WATER_QUALIFIERS = [
+    'drinking water', 'potable water', 'human consumption',
+    'jal jeevan mission', 'jjm', 'nwqsm', 'pwss', 'rural water supply',
 ]
 
 # ---------------------------------------------------------------------------
@@ -64,18 +91,12 @@ THEMATIC_KEYWORD_GROUPS = {
         # noise, not a heat measure.
         # REMOVED (Odisha-only): 'satark' (OSDMA heatwave alert app)
     ],
+    # EXPLICIT terms always count; AMBIGUOUS infra terms (defined above) only
+    # count when gated by a DRINKING_WATER_QUALIFIER co-occurring in the text.
     "Drinking Water & Hydration": [
         'drinking water', 'water kiosk', 'water atm', 'water booth',
         'hydration point', 'hydration centre', 'hydration center', 'cold water',
-        'tube well', 'tubewell', 'borewell', 'bore well',
-        'hand pump', 'handpump', 'overhead tank', 'oh tank',
-        'stand post', 'piped water supply', 'water supply scheme',
-        # dual-use (deployed for summer scarcity AND year-round) -- review:
-        'water tanker',               # [EHW] Tripura/Arunachal deploy tankers in heat
-        'water sprinkling',
-        # REMOVED (Odia/Odisha-only): jalachhatra, jala jogana kendra,
-        #   jal seva shibira -- those are OSDMA/BMC program names.
-    ],
+    ] + DRINKING_WATER_AMBIGUOUS_KEYWORDS,
     "Cooling & Reflective Infrastructure": [
         'cool roof', 'white roof',
         # REMOVED 'white topping': in the Assam corpus it only ever matched
@@ -263,13 +284,6 @@ SCHEME_KEYWORDS = {
 
 # ---------------------------------------------------------------------------
 # Departments excluded even if their tenders match a positive keyword.
-# NOTE: the two entries below ARE real Assam departments, so unlike in the
-# Odisha run they will now actually fire. Caution: agriculture is genuinely
-# heat-relevant (working-hour limits, shade/water for farmers were flagged in
-# [EHW]), so blanket-excluding the whole Agriculture directorate may drop real
-# heat-agri tenders. Treat this list as a starting point and replace it with
-# the Assam departments that, on audit, produce noise without heat relevance
-# (e.g. Sericulture/Handloom, Fishery, Mining, Excise, Transport vehicle wing).
 # ---------------------------------------------------------------------------
 EXCLUDED_DEPARTMENTS = [
     "Directorate of Agriculture and Assam Seed Corporation",

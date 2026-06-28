@@ -9,7 +9,7 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 
 variables_data_path = os.getcwd() + r'/Heat-odisha/data_extractor/master/'
-od_sd = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
+od_sd = gpd.read_file(os.getcwd() + r'/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
 
 date_range = pd.date_range(start="2021-01-01", end="2026-03-01", freq='MS')
 

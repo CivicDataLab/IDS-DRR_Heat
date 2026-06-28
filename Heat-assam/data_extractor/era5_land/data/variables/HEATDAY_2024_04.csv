@@ -1,4 +1,4 @@
-object_id,mean-heatday,timeperiod
+object_id,heat-days-score,timeperiod
 18-300-00101,2.1176470588235294,2024_04
 18-300-00102,1.0,2024_04
 18-300-00103,1.2,2024_04
