@@ -8,7 +8,7 @@ from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
-variables_data_path = os.getcwd() + r'/Heat-odisha/data_extractor/master/'
+variables_data_path = os.getcwd() + r'/data_extractor/master/'
 od_sd = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
 
 date_range = pd.date_range(start="2021-01-01", end="2026-03-01", freq='MS')
@@ -151,7 +151,7 @@ master_df['mean_ndbi'] = master_df['mean_ndbi'].ffill()
 master_df = master_df.fillna(0)
 # Drop columns with suffixes "_x" and "_y"
 master_df = master_df.loc[:, ~master_df.columns.str.endswith('_x') & ~master_df.columns.str.endswith('_y')]
-output_file = Path.cwd().parent / "IDS-DRR_Heat" / "Heat-odisha" / "RiskScoreModel" / "data" / "MASTER_VARIABLES.csv"
+output_file = Path.cwd().parent / "Heat-odisha" / "RiskScoreModel" / "data" / "MASTER_VARIABLES.csv"
 master_df.to_csv(output_file, index=False)
 #master_df[master_df.duplicated(subset= ['object_id', 'timeperiod'])].to_csv('MASTER_VARIABLES.csv', index=False)
 
