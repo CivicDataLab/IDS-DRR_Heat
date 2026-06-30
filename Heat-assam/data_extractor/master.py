@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 import glob
 
-main_directory = Path.cwd() / 'Heat-assam/data_extractor/'
+main_directory = Path.cwd() / 'data_extractor/'
 #print(main_directory)
 
 

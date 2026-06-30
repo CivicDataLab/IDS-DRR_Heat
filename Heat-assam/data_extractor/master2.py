@@ -6,11 +6,11 @@ import geopandas as gpd
 import warnings
 warnings.filterwarnings("ignore")
 
-variables_data_path = os.getcwd() + '/Heat-assam/data_extractor/master/'
+variables_data_path = os.getcwd() + '/data_extractor/master/'
 print(variables_data_path)
 assam_rc = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-assam/data_extractor/Maps/Geojson/assam_rc_2024-11.geojson')
 
-date_range = pd.date_range(start="2021-04-01", end="2026-05-31", freq='MS')
+date_range = pd.date_range(start="2021-01-01", end="2026-05-31", freq='MS')
 
 # Format the date values as "YYYY_MM" strings
 formatted_dates = [date.strftime('%Y_%m') for date in date_range]
@@ -44,6 +44,7 @@ monthly_variables = [#'total_tender_awarded_value','erosion_tenders_awarded_valu
                     #  'total_expenditure_value','SOPD_expenditure_value',
                     #  'SDRF_expenditure_value','Immediate Measures_expenditure_value','Others_expenditure_value','SOPD_expenditure_value', 'Repair and Restoration_expenditure_value',
                     #  'Relief Camps','Relief Centers','Relief Inmates'
+                     'total_tender_awarded_value',
                      'heatdays',
                      'land_surface_temperature'
                      ]
@@ -162,8 +163,8 @@ master_df = master_df.merge(
 
 print("LST raster column appended to master_df")
 
-#master_df.to_csv(os.getcwd() + '/RiskScoreModel/data/MASTER_VARIABLES.csv', index=False)
-master_df.to_csv(os.getcwd() + '/Heat-assam/RiskScoreModel/data/MASTER_VARIABLES.csv', index=False)
+master_df.to_csv(os.getcwd() + '/RiskScoreModel/data/MASTER_VARIABLES.csv', index=False)
+# master_df.to_csv(os.getcwd() + '/data_extractor/master/MASTER_VARIABLES.csv', index=False)
 
 #master_df[master_df.duplicated(subset= ['object_id', 'timeperiod'])].to_csv('MASTER_VARIABLES.csv', index=False)
 
