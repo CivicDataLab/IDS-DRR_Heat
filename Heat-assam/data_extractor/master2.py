@@ -127,13 +127,13 @@ for variable in onetime_variables:
 # master_df['max_rain'] = master_df['max_rain'].fillna(master_df.groupby(['object_id'])['max_rain'].transform('mean'))
 # master_df['mean_rain'] = master_df['mean_rain'].fillna(master_df.groupby(['object_id'])['mean_rain'].transform('mean'))
 # master_df['sum_rain'] = master_df['sum_rain'].fillna(master_df.groupby(['object_id'])['sum_rain'].transform('mean'))
-
+print(master_df.columns.tolist())
 # Impute missing ANTYODAYA vars
-master_df['rc_nosanitation_hhds_pct'] = master_df['rc_nosanitation_hhds_pct'].fillna(master_df.groupby(['dtname'])['rc_nosanitation_hhds_pct'].transform('mean'))
-master_df['rc_piped_hhds_pct'] = master_df['rc_piped_hhds_pct'].fillna(master_df.groupby(['dtname'])['rc_piped_hhds_pct'].transform('mean'))
-# master_df['avg_tele'] = master_df['avg_tele'].fillna(master_df.groupby(['dtname'])['avg_tele'].transform('median')) #median
-master_df['avg_electricity'] = master_df['avg_electricity'].fillna(master_df.groupby(['dtname'])['avg_electricity'].transform('mean'))
-# master_df['net_sown_area_in_hac'] = master_df['net_sown_area_in_hac'].fillna(master_df.groupby(['dtname'])['net_sown_area_in_hac'].transform('mean'))
+master_df['rc_nosanitation_hhds_pct'] = master_df['rc_nosanitation_hhds_pct'].fillna(master_df.groupby(['object_id'])['rc_nosanitation_hhds_pct'].transform('mean'))
+master_df['rc_piped_hhds_pct'] = master_df['rc_piped_hhds_pct'].fillna(master_df.groupby(['object_id'])['rc_piped_hhds_pct'].transform('mean'))
+# master_df['avg_tele'] = master_df['avg_tele'].fillna(master_df.groupby(['object_id'])['avg_tele'].transform('median')) #median
+master_df['avg_electricity'] = master_df['avg_electricity'].fillna(master_df.groupby(['object_id'])['avg_electricity'].transform('mean'))
+# master_df['net_sown_area_in_hac'] = master_df['net_sown_area_in_hac'].fillna(master_df.groupby(['object_id'])['net_sown_area_in_hac'].transform('mean'))
 
 # Impute missing NDVI and NDBI
 # master_df = master_df.sort_values(by=['object_id', 'timeperiod'])
@@ -143,6 +143,28 @@ master_df['avg_electricity'] = master_df['avg_electricity'].fillna(master_df.gro
 # Impute all other vars with 0
 master_df = master_df.fillna(0)
 
+# =========================================================
+# Restore GeoJSON attributes
+# =========================================================
+
+geo_lookup = (
+    assam_rc[['object_id', 'dtname', 'are_new']]
+    .rename(columns={'are_new': 'rc_area'})
+    .drop_duplicates()
+)
+
+# Remove old copies if they exist
+master_df = master_df.drop(
+    columns=['dtname', 'rc_area'],
+    errors='ignore'
+)
+
+# Merge back from GeoJSON
+master_df = master_df.merge(
+    geo_lookup,
+    on='object_id',
+    how='left'
+)
 
 # =========================================================
 # ENSURE LST RASTER IS INCLUDED BEFORE FINAL SAVE
@@ -162,6 +184,12 @@ master_df = master_df.merge(
 )
 
 print("LST raster column appended to master_df")
+
+master_df["district"] = (
+    master_df["dtname"]
+    .astype(str)
+    .str.strip()
+)
 
 master_df.to_csv(os.getcwd() + '/RiskScoreModel/data/MASTER_VARIABLES.csv', index=False)
 # master_df.to_csv(os.getcwd() + '/data_extractor/master/MASTER_VARIABLES.csv', index=False)
