@@ -17,6 +17,12 @@ Fixes applied vs. the original (see the audit):
    co-occurring with one). Set REQUIRE_STRONG_SIGNAL=False to reproduce the
    old loose behaviour.
 
+   (Assam update) The heat-specific whitelist that drives this gate,
+   HEAT_SPECIFIC_KEYWORDS, has been MOVED into heat_tenders_config.py so the
+   config is the single source of truth; this module imports it and asserts it
+   is a subset of POSITIVE_KEYWORDS. The set was also re-tuned against the real
+   Assam corpus (see the config for the audit notes).
+
 3. Negative keywords could cause false negatives
    The original dropped the whole tender if ANY negative term appeared.
    A negative term no longer overrides a strong heat-specific signal.
@@ -45,6 +51,7 @@ from heat_tenders_config import (
     POSITIVE_KEYWORDS,
     NEGATIVE_KEYWORDS,
     THEMATIC_KEYWORD_GROUPS,
+    HEAT_SPECIFIC_KEYWORDS,
     SCHEME_KEYWORDS,
     EXCLUDED_DEPARTMENTS,
     SEASON_MONTHS,
@@ -72,50 +79,14 @@ HEAT_TENDERS_DIR = os.path.join(DATA_DIR, 'heat_tenders')
 HEAT_TENDERS_ALL_CSV = os.path.join(DATA_DIR, 'heat_tenders_all.csv')
 
 # ---------------------------------------------------------------------------
-# Heat-specific keyword set (CURATED, not group-derived).
-# Lesson from testing: deriving this from whole thematic groups was wrong,
-# because the "Heatwave & Emergency Response" group contains generic disaster
-# terms (ambulance, first aid, emergency response) and the word "saline" is a
-# homonym -- in Odisha tenders it almost always means a SALINE EMBANKMENT
-# (coastal saltwater flood protection), not medical saline. Those produced a
-# fresh batch of false positives. This list is therefore an explicit whitelist
-# of terms whose presence is, on its own, a reliable heat-response signal.
-# Deliberately EXCLUDED as too generic/ambiguous (kept as positives, not as
-# strong signals): saline, ambulance, first aid, emergency response, iv fluid,
-# high temperature, rising temperature, climate resilient, canopy, awning,
-# air cooler, white painting, green space, mobile health unit,
-# rapid response team, early warning system.
+# Heat-specific keyword set (the "strong signal" whitelist) now lives in
+# heat_tenders_config.py (HEAT_SPECIFIC_KEYWORDS), imported above, so the
+# config is the single source of truth. A consistency check (below, next to
+# _STRONG_NORM) enforces the invariant that every strong term is also a
+# positive term -- otherwise a strong term could never fire (heat_filter only
+# checks strong-ness among the positives that actually matched), which is the
+# silent-drift bug that let the old hard-coded copy fall out of sync.
 # ---------------------------------------------------------------------------
-HEAT_SPECIFIC_KEYWORDS = {
-    # heat events / illness
-    'heatwave', 'heat wave', 'heat-wave', 'heat stress', 'heat stroke',
-    'heat action plan', 'heat resilience', 'heat resilient', 'extreme heat',
-    'heat resistant', 'heat related illness', 'heat illness', 'heat exhaustion',
-    'heat cramp', 'heat rash', 'heat alert', 'heat warning', 'heat advisory',
-    'heat hotline', 'satark', 'sunstroke', 'sun stroke',
-    'heat stroke treatment', 'heat stroke ward', 'heat stroke bed',
-    'cooling centre', 'cooling center', 'relief chamber',
-    # reflective / passive cooling
-    'cool roof', 'white roof', 'white topping', 'roof insulation',
-    'thermal insulation', 'heat reflective', 'reflective coating',
-    'albedo paint', 'albedo painting', 'reflective paint', 'green roof',
-    'green roofing', 'passive cooling', 'k glass', 'doubly glazed glass',
-    'white china mosaic', 'lime based whitewash', 'white tarp', 'acrylic resin coating',
-    # heat-relief water / hydration
-    'water kiosk', 'water atm', 'hydration point', 'hydration centre', 'hydration center',
-    # NOTE: 'jalachhatra' deliberately NOT a strong signal -- in this corpus it
-    # is an irrigation-canal name ("Jalachhatra Minor"), not a water kiosk.
-    'jala jogana kendra', 'jal jogana kendra', 'jal seva shibira',
-    # heat-relief shelter / shade
-    # NOTE: 'rest shade'/'rest shed' demoted from strong -- in this corpus the
-    # matches are overwhelmingly administrative ("Revenue Rest Shade",
-    # "Attendant Rest shade at DHH"), not heat-relief shelters. Needs a
-    # co-occurring heat/cool qualifier to be reliable.
-    'cool shelter', 'cool resting space', 'cool resting shed',
-    'shade net', 'shade structure',
-    # heat-specific awareness
-    'swasthya kantha', 'mock drill',
-}
 
 
 def clean_text(text):
@@ -155,6 +126,14 @@ def count_keyword_hits(text, keywords):
 
 
 _STRONG_NORM = {normalize_keyword(s) for s in HEAT_SPECIFIC_KEYWORDS}
+
+# Consistency guard: every strong term must also be a positive term, else it
+# can never fire (heat_filter only tests strong-ness among matched positives).
+_orphan_strong = _STRONG_NORM - {normalize_keyword(k) for k in POSITIVE_KEYWORDS}
+assert not _orphan_strong, (
+    "HEAT_SPECIFIC_KEYWORDS has terms absent from THEMATIC_KEYWORD_GROUPS "
+    "(they can never fire as strong): " + ", ".join(sorted(_orphan_strong))
+)
 
 
 def heat_filter(row):

@@ -1,0 +1,7 @@
+district_final_risk_score.csv
+  undocumented columns: ['land-surface-temperature-raster', 'topsis-score']
+  missing documented indicators: []
+
+final_risk_score.csv
+  undocumented columns: ['HQ', 'are-new', 'avg-tele', 'cum-tender-value', 'land-surface-temperature-raster', 'men-bp', 'men-sugar', 'net-sown-area-in-hac', 'rc-area', 'rc-nosanitation-hhds-pct', 'rc-piped-hhds-pct', 'revenue-ci', 'revenue-cr', 'topsis-score', 'total-hhd', 'women-bp', 'women-sugar', 'year']
+  missing documented indicators: ['nosanitation-hhds-pct', 'piped-hhds-pct', 'total-tender-awarded-value-fy-cumsum']
