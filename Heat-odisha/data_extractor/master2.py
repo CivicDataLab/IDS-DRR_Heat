@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 variables_data_path = os.getcwd() + r'/data_extractor/master/'
 od_sd = gpd.read_file(r'~/Documents/CDL/repos/IDS-DRR_Heat/Heat-odisha/Maps/od_ids-drr_shapefiles/odisha_block_final.geojson')
 
-date_range = pd.date_range(start="2021-01-01", end="2026-06-01", freq='MS')
+date_range = pd.date_range(start="2021-01-01", end="2026-06-30", freq='MS')
 
 # Format the date values as "YYYY_MM" strings
 formatted_dates = [date.strftime('%Y_%m') for date in date_range]
